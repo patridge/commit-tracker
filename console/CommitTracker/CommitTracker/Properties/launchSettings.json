@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CommitTracker": {
+      "commandName": "Project",
+      "commandLineArgs": "--repoOwner=\"patridge\" --repoName=\"commit-tracker-test\" --repoBranch=\"master\" --repoPaths=\"testpath1,testpath3\""
+    }
+  }
+}

@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2047
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommitTracker", "CommitTracker\CommitTracker.csproj", "{15EE3700-0180-4163-817A-B4DA1DF7972F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{15EE3700-0180-4163-817A-B4DA1DF7972F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15EE3700-0180-4163-817A-B4DA1DF7972F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15EE3700-0180-4163-817A-B4DA1DF7972F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15EE3700-0180-4163-817A-B4DA1DF7972F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3771066C-0E14-4151-8F5A-EE187D1A63C5}
+	EndGlobalSection
+EndGlobal
