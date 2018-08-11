@@ -20,11 +20,11 @@ namespace CommitTracker
 
         static void Information(string output)
         {
-            Console.WriteLine(output);
+            Console.Out.WriteLine(output);
         }
         static void Error(string output)
         {
-            Console.WriteLine(output);
+            Console.Error.WriteLine(output);
         }
         static string ArgumentOrEnvironmentVariable(string key, string environmentPrefix, string fallback)
         {
@@ -72,7 +72,7 @@ namespace CommitTracker
             }
             catch (OptionException e)
             {
-                Console.WriteLine("Error parsing inputs: " + e.Message);
+                Error("Error parsing inputs: " + e.Message);
                 return;
             }
 
@@ -116,22 +116,25 @@ namespace CommitTracker
         //Task("Debug-InfoDump")
         //.Description("Outputs the values found in the various supplied command-line and environment variables. Also outputs the command line help system.")
         //.Does(() => {
-            Information($"{nameof(gitHubAccessToken)}: {gitHubAccessToken}");
-            Information($"{nameof(gitHubRepoOwner)}/{nameof(gitHubRepoName)}: {gitHubRepoOwner}/{gitHubRepoName}");
-            Information($"{nameof(gitHubRepoBranchName)}: {gitHubRepoBranchName}");
-            Information($"{nameof(gitRepoPaths)}: {string.Join(", ", gitRepoPaths)}");
+            if (string.IsNullOrWhiteSpace(gitHubRepoOwner) || string.IsNullOrWhiteSpace(gitHubRepoName) || string.IsNullOrWhiteSpace(gitHubRepoBranchName))
+            {
+                Information($"{nameof(gitHubAccessToken)}: {gitHubAccessToken}");
+                Information($"{nameof(gitHubRepoOwner)}/{nameof(gitHubRepoName)}: {gitHubRepoOwner}/{gitHubRepoName}");
+                Information($"{nameof(gitHubRepoBranchName)}: {gitHubRepoBranchName}");
+                Information($"{nameof(gitRepoPaths)}: {string.Join(", ", gitRepoPaths)}");
 
-            // output the options
-            Console.WriteLine();
-            Console.WriteLine("Command-line options:");
-            options.WriteOptionDescriptions(Console.Out);
+                // output the options
+                Information("");
+                Information("Command-line options:");
+                options.WriteOptionDescriptions(Console.Out);
 
-            //Information("Available tasks");
-            //foreach (var task in Tasks)
-            //{
-            //    Information(" * " + task.Name + ":");
-            //    Information("     " + task.Description);
-            //}
+                //Information("Available tasks");
+                //foreach (var task in Tasks)
+                //{
+                //    Information(" * " + task.Name + ":");
+                //    Information("     " + task.Description);
+                //}
+            }
         //});
 
         //Task("CheckForChanges")
@@ -150,11 +153,23 @@ namespace CommitTracker
             // Determine list of changes in latest commit(s).
             var changes = await gitHubReposClient.Commit.Compare(repoId, priorKnownCommit.Sha, mostRecentCommit.Sha);
             // Determine if watched path(s) are in the list of changes.
-            var changesAffectingWatchedRepoPaths = changes.Files.Where(f => gitRepoPaths.Any(path => f.Filename.StartsWith(path)));
-
-            foreach (var path in changesAffectingWatchedRepoPaths)
+            var pathsAndFilesChanged = gitRepoPaths.Select(path =>
             {
-                Information(path.Filename);
+                List<string> filesChanged = changes.Files.Where(f => f.Filename.StartsWith(path)).Select(file => file.Filename).ToList();
+                return (Path: path, FilesChanged: filesChanged);
+            }).Where(pathAndFilesChanged => pathAndFilesChanged.FilesChanged.Any());
+
+            if (pathsAndFilesChanged.Any())
+            {
+                Information($"Relevant changes found: {priorKnownCommit.Sha.Substring(0, 5)}..{mostRecentCommit.Sha.Substring(0, 5)}");
+                foreach (var pathAndFilesChanged in pathsAndFilesChanged)
+                {
+                    Information($"{pathAndFilesChanged.Path}");
+                    foreach (var fileChanged in pathAndFilesChanged.FilesChanged)
+                    {
+                        Information($"* {fileChanged}");
+                    }
+                }
             }
             // TODO: Set up something for VSTS to see to indicate a change was found
         //});
