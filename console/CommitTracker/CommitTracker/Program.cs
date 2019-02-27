@@ -47,6 +47,7 @@ namespace CommitTracker
             string gitHubRepoOwner = null;
             string gitHubRepoBranchName = "master";
             string[] gitRepoPaths = new string[0];
+            string gitRepoLastCommitSha = null;
 
             var options = new OptionSet {
                 {
@@ -58,6 +59,7 @@ namespace CommitTracker
                 { "repoName=", "Repo name to analyze", name => gitHubRepoName = name },
                 { "repoBranch=", "Branch name within repo", branch =>  gitHubRepoBranchName = branch },
                 { "repoPaths=", "Path within repo to observe for changes", paths => gitRepoPaths = paths.Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries) },
+                { "repoLastKnownCommitSha=", "Last commit within repo since checking for chnages", lastCommit => gitRepoLastCommitSha = lastCommit },
             };
 
             //// NOTE: Skip two args because they are Cake script items (e.g., `/…/Cake.exe` and `build.cake`), which screws up Mono.Options because a console app's args do not include it.
@@ -122,6 +124,7 @@ namespace CommitTracker
                 Information($"{nameof(gitHubRepoOwner)}/{nameof(gitHubRepoName)}: {gitHubRepoOwner}/{gitHubRepoName}");
                 Information($"{nameof(gitHubRepoBranchName)}: {gitHubRepoBranchName}");
                 Information($"{nameof(gitRepoPaths)}: {string.Join(", ", gitRepoPaths)}");
+                Information($"{nameof(gitRepoLastCommitSha)}: {gitRepoLastCommitSha}");
 
                 // output the options
                 Information("");
@@ -148,10 +151,10 @@ namespace CommitTracker
             var commits = await gitHubReposClient.Commit.GetAll(gitHubRepoOwner, gitHubRepoName, new Octokit.ApiOptions { PageSize = 1, PageCount = 2, });
             // Grab latest commit to repo.
             var lastCommits = commits.Take(2);
-            var priorKnownCommit = lastCommits.Last();
-            var mostRecentCommit = lastCommits.First();
+            var priorKnownCommit = gitRepoLastCommitSha ?? lastCommits.Last().Sha;
+            var mostRecentCommit = lastCommits.First().Sha;
             // Determine list of changes in latest commit(s).
-            var changes = await gitHubReposClient.Commit.Compare(repoId, priorKnownCommit.Sha, mostRecentCommit.Sha);
+            var changes = await gitHubReposClient.Commit.Compare(repoId, priorKnownCommit, mostRecentCommit);
             // Determine if watched path(s) are in the list of changes.
             var pathsAndFilesChanged = gitRepoPaths.Select(path =>
             {
@@ -161,7 +164,7 @@ namespace CommitTracker
 
             if (pathsAndFilesChanged.Any())
             {
-                Information($"Relevant changes found: {priorKnownCommit.Sha.Substring(0, 5)}..{mostRecentCommit.Sha.Substring(0, 5)}");
+                Information($"Relevant changes found: {priorKnownCommit.Substring(0, 5)}..{mostRecentCommit.Substring(0, 5)}");
                 foreach (var pathAndFilesChanged in pathsAndFilesChanged)
                 {
                     Information($"{pathAndFilesChanged.Path}");
